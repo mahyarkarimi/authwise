@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  tokens    Token[]
+  authCodes AuthorizationCode[]
+}
+
+model Client {
+  id                   String              @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  clientId             String              @unique
+  clientSecret         String
+  redirectUris         String[]
+  grants               String[]
+  tokens               Token[]
+  scope                String[]
+  accessTokenLifetime  Int                 @default(3600) // in seconds
+  refreshTokenLifetime Int                 @default(1209600) // in seconds (14 days)
+  authCodes            AuthorizationCode[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+}
+
+model Token {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  accessToken           String    @unique
+  refreshToken          String?   @unique
+  userId                String    @db.ObjectId
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId              String    @db.ObjectId
+  client                Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String[]
+  createdAt             DateTime  @default(now())
+}
+
+model AuthorizationCode {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  authorizationCode   String   @unique
+  userId              String   @db.ObjectId
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId            String   @db.ObjectId
+  client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  redirectUri         String
+  expiresAt           DateTime
+  scope               String[]
+  createdAt           DateTime @default(now())
+  codeChallenge       String?
+  codeChallengeMethod String?
+}
+
+model Admin {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  email        String    @unique
+  password     String
+  lastLoggedIn DateTime?
+  totpSecret   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
