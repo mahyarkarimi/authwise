@@ -9,6 +9,7 @@ import { OAuth2ServerModule } from '@authwise/oauth2-server';
 import { OAuth2ModelService } from './oauth2-model';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthCookieMiddleware } from './utils/auth-cookie.middleware';
+import loadKeysConfig from './load-keys.config';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuthCookieMiddleware } from './utils/auth-cookie.middleware';
       envFilePath: ['.env'],
       isGlobal: true,
       cache: true,
+      load: [loadKeysConfig]
     }),
     PrismaModule,
     JwtModule.registerAsync({

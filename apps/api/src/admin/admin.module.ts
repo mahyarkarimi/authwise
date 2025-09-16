@@ -19,8 +19,11 @@ import { JwtStrategy } from './jwt.strategy';
             inject: [ConfigService],
             useFactory(config: ConfigService) {
                 return {
-                    secret: config.get<string>('ADMIN_JWT_SECRET') || 'admin-secret-key',
-                    signOptions: { expiresIn: config.get<string>('ADMIN_JWT_EXPIRES_IN') || '2h' },
+                    publicKey: config.get<string>('adminJwtPublicKey'),
+                    privateKey: config.get<string>('adminJwtPrivateKey'),
+                    signOptions: {
+                        expiresIn: config.get<string>('ADMIN_JWT_EXPIRES_IN') || '2h',
+                    },
                 }
             },
         }),

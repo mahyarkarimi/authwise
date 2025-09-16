@@ -7,12 +7,6 @@ import * as fs from 'node:fs';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-
-  process.env.JWT_PUBLIC_KEY = Buffer.from(fs.readFileSync('./public_key.pem')).toString();
-  process.env.JWT_PRIVATE_KEY = Buffer.from(fs.readFileSync('./private_key.pem')).toString();
-  process.env.JWT_REFRESH_PRIVATE_KEY = Buffer.from(fs.readFileSync('./private_key.refresh.pem')).toString();
-  process.env.JWT_REFRESH_PUBLIC_KEY = Buffer.from(fs.readFileSync('./public_key.refresh.pem')).toString();
-
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()

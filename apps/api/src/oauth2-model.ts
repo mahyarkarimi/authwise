@@ -26,7 +26,7 @@ export class OAuth2ModelService
     RefreshTokenModel,
     AuthorizationCodeModel {
 
-        private readonly logger = new Logger(OAuth2ModelService.name);
+    private readonly logger = new Logger(OAuth2ModelService.name);
     constructor(
         private readonly jwtService: JwtService,
         private readonly prisma: PrismaService,
@@ -34,10 +34,14 @@ export class OAuth2ModelService
     ) { }
 
     private getAccessTokenOptions(): JwtSignOptions {
-        this.logger.debug('getAccessTokenOptions')
+        this.logger.debug('getAccessTokenOptions');
+        let expiresIn: string | number = this.configService.get<string>('JWT_EXPIRES_IN');
+        if (!isNaN(Number(expiresIn))) {
+            expiresIn = Number(expiresIn);
+        }
         return {
-            secret: this.configService.get('JWT_PRIVATE_KEY'),
-            expiresIn: '3h',
+            privateKey: this.configService.get('jwtPrivateKey'),
+            expiresIn: expiresIn || '3h',
             algorithm: jwtOpts.algorithm,
             issuer: jwtOpts.issuer,
             audience: jwtOpts.audience,
@@ -46,9 +50,13 @@ export class OAuth2ModelService
 
     private getRefreshTokenOptions(): JwtSignOptions {
         this.logger.debug('getRefreshTokenOptions')
+        let expiresIn: string | number = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+        if (!isNaN(Number(expiresIn))) {
+            expiresIn = Number(expiresIn);
+        }
         return {
-            secret: this.configService.get('JWT_REFRESH_PRIVATE_KEY'),
-            expiresIn: '3D',
+            privateKey: this.configService.get('jwtRefreshPrivateKey'),
+            expiresIn: expiresIn || '7d',
             algorithm: jwtOpts.algorithm,
             issuer: jwtOpts.issuer,
             audience: jwtOpts.audience,
@@ -148,6 +156,16 @@ export class OAuth2ModelService
         });
 
         if (!token || !token.refreshToken) return false;
+        try {
+            await this.jwtService.verifyAsync(token.refreshToken, {
+                algorithms: [jwtOpts.algorithm],
+                audience: jwtOpts.audience,
+                issuer: jwtOpts.issuer,
+                publicKey: this.configService.get('jwtRefreshPublicKey'),
+            });
+        } catch (error) {
+            return false;
+        }
         return {
             client: this.maskClient(token.client),
             user: this.maskUser(token.user),
@@ -216,14 +234,14 @@ export class OAuth2ModelService
         if (!scope || scope.length === 0) {
             return ['read']; // Example: default to 'read' scope
         }
-        
+
         // Validate requested scopes against client's allowed scopes
         // Assuming client has an 'allowedScopes' property or derive from grants
         const allowedScopes = client.grants?.includes('authorization_code') ? ['read', 'write'] : ['read'];
-        
+
         // Filter to only valid scopes
         const validScopes = scope.filter(s => allowedScopes.includes(s));
-        
+
         // Return valid scopes or false if none are valid
         return validScopes.length > 0 ? validScopes : false;
     }
@@ -234,7 +252,11 @@ export class OAuth2ModelService
         scope: string[],
     ): Promise<string> {
         this.logger.debug('generateAccessToken');
-        const token = await this.jwtService.signAsync({ id: user.id, scope, client: client.clientId }, this.getAccessTokenOptions());
+        const token = await this.jwtService.signAsync({ 
+            id: user.id, 
+            scope, 
+            client: client.clientId 
+        }, this.getAccessTokenOptions());
         return token;
     }
 
@@ -298,6 +320,19 @@ export class OAuth2ModelService
             include: { user: true, client: true },
         });
         if (!token) return false;
+
+        try {
+            await this.jwtService.verifyAsync(token.accessToken, {
+                algorithms: [jwtOpts.algorithm],
+                audience: jwtOpts.audience,
+                issuer: jwtOpts.issuer,
+                publicKey: this.configService.get('jwtPublicKey'),
+            });
+        } catch (error) {
+            console.log({ error })
+            return false;
+        }
+
         return {
             accessToken: token.accessToken,
             accessTokenExpiresAt: token.accessTokenExpiresAt ?? undefined,
