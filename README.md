@@ -74,7 +74,7 @@ This project is a modern OAuth2 authentication platform, featuring a Next.js web
 7. **Access the application**
 
    - Frontend: [http://localhost:3000](http://localhost:3000)
-   - API: [http://localhost:4000](http://localhost:3001) (default ports)
+   - API: [http://localhost:3001](http://localhost:3001) (default ports)
 
 ## Dependencies
 
