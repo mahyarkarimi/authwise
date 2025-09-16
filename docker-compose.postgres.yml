@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: authwise
+      POSTGRES_PASSWORD: authwisePassword
+      POSTGRES_DB: authwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  
+volumes:
+  db-data: {}

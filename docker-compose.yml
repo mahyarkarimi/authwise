@@ -1,0 +1,14 @@
+services:
+  db:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: authwise
+      MONGO_INITDB_ROOT_PASSWORD: authwisePassword
+      MONGO_INITDB_DATABASE: authwise
+    ports:
+      - "27017:27017"
+    volumes:
+      - db-data:/data/db
+
+volumes:
+  db-data: {}
